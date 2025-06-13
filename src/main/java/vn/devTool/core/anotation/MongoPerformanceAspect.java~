@@ -1,0 +1,25 @@
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Component
+public class MongoPerformanceAspect {
+
+    @Pointcut("execution(* org.springframework.data.mongodb.repository.MongoRepository+.*(..))")
+    public void mongoRepositoryMethods() {}
+
+    @Around("mongoRepositoryMethods()")
+    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
+
+        Object result = joinPoint.proceed(); // Thực hiện truy vấn MongoDB
+
+        long duration = System.currentTimeMillis() - start;
+        System.out.println("Mongo query took " + duration + " ms");
+
+        return result;
+    }
+}
