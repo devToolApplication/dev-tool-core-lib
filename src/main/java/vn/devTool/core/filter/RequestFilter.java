@@ -8,6 +8,8 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @Component
 @Log4j2
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestFilter implements Filter {
 
     public static final String TRACE_ID = "traceId";
@@ -43,7 +46,7 @@ public class RequestFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } finally {
-            MDC.clear(); // Cleanup để tránh memory leak
+            MDC.clear();
         }
     }
 

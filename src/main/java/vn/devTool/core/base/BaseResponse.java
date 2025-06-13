@@ -37,11 +37,19 @@ public class BaseResponse<T> {
             .build();
     }
 
-    // Phương thức tiện ích để tạo response lỗi
     public static <T> BaseResponse<T> error(String traceId, String path, int status, String errorMessage) {
         return BaseResponse.<T>builder()
             .traceId(traceId)
             .path(path)
+            .status(status)
+            .errorMessage(errorMessage)
+            .build();
+    }
+
+    public static <T> BaseResponse<T> error(int status, String errorMessage) {
+        return BaseResponse.<T>builder()
+            .traceId(RequestFilter.getTraceId())
+            .path(RequestFilter.getPath())
             .status(status)
             .errorMessage(errorMessage)
             .build();

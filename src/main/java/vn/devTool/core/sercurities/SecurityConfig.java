@@ -11,19 +11,24 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
+import vn.devTool.core.filter.JwtScopeValidationFilter;
 import vn.devTool.core.properties.SecurityProperties;
+import vn.devTool.core.sercurities.entryPoint.AuthEntryPoint;
 
 import java.util.List;
 
-@EnableConfigurationProperties(SecurityProperties.class)
+@EnableConfigurationProperties
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
   private final SecurityProperties props;
+  private final AuthEntryPoint authEntryPoint;
+  private final JwtScopeValidationFilter jwtScopeValidationFilter;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,7 +45,11 @@ public class SecurityConfig {
             .requestMatchers(props.getPublicRoutes().toArray(new String[0])).permitAll()
             .anyRequest().authenticated()
         )
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .jwt(Customizer.withDefaults())
+            .authenticationEntryPoint(authEntryPoint)
+        )
+        .addFilterAfter(jwtScopeValidationFilter, BearerTokenAuthenticationFilter.class)
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
     return http.build();

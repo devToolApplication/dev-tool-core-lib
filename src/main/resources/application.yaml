@@ -19,7 +19,13 @@ spring:
       - "http://localhost:8083"
       - "http://localhost:8084"
       - "http://localhost:8085"
-
+    clients:
+      allowed:
+        - "dev-tool-client"
+    scopes:
+      required:
+        - "profile"
+        - "email"
   data:
     mongodb:
       uri:

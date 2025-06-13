@@ -14,25 +14,39 @@ import java.util.List;
 public class SecurityProperties {
     private List<String> publicRoutes;
     private List<String> corsAllowUrl;
-    private String tokenHeaderName;
-    private Boolean allowCredentials;
-    private List<String> allowMethods;
+    private List<String> allowMethods = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+    private Boolean allowCredentials = true;
 
-    private OAuth2Properties oauth2;
+    private Oauth2Properties oauth2;
+
+    private ClientConfig clients;
+    private ScopeConfig scopes;
 
     @Getter
     @Setter
-    public static class OAuth2Properties {
-        private ResourceServer resourceServer;
+    public static class ClientConfig {
+        private List<String> allowed;
+    }
+
+    @Getter
+    @Setter
+    public static class ScopeConfig {
+        private List<String> required;
+    }
+
+    @Getter
+    @Setter
+    public static class Oauth2Properties {
+        private ResourceServerProperties resourceServer;
 
         @Getter
         @Setter
-        public static class ResourceServer {
-            private Jwt jwt;
+        public static class ResourceServerProperties {
+            private JwtProperties jwt;
 
             @Getter
             @Setter
-            public static class Jwt {
+            public static class JwtProperties {
                 private String issuerUri;
             }
         }
