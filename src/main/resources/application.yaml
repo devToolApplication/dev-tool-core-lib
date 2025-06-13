@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: mos-core-lib
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/develop_tool_realm
+    public-routes:
+      - "/v1/public/**"
+      - "/swagger-ui/**"
+      - "/v3/api-docs/**"
+    cors-allow-url:
+      - "http://localhost:3000"
+      - "http://localhost:8080"
+      - "http://localhost:8081"
+      - "http://localhost:8082"
+      - "http://localhost:8083"
+      - "http://localhost:8084"
+      - "http://localhost:8085"
+
+  data:
+    mongodb:
+      uri:
+      database:
+    redis:
+      prefix: app
+      host: redis-14343.c1.ap-southeast-1-1.ec2.redns.redis-cloud.com
+      port: 14343
+      username: default
+      password:
+      timeout: 30000
+
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+        one-indexed-parameters: true
+        sort-parameter: id,asc
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 30000
+        read-timeout: 30000
+
+rest-template:
+  client:
+    config:
+      default:
+        connect-timeout: 30000
+        read-timeout: 30000
+
+springdoc:
+  title: "MOS Core API"
+  description: "Core library providing common services and utilities"
+  version: "1.0.0"
+  contact:
+    name: "MOS Dev Team"
+    email: "support@mos.vn"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+
+logging:
+  level:
+    vn.mos.core: INFO
+
+server:
+  port: 8081
+
