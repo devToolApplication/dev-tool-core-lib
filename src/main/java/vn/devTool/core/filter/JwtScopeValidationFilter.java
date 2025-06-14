@@ -17,8 +17,10 @@ import vn.devTool.core.properties.SecurityProperties;
 import vn.devTool.core.utils.JsonUtils;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -38,8 +40,14 @@ public class JwtScopeValidationFilter extends OncePerRequestFilter {
             String clientId = jwt.getClaimAsString("client_id");
             List<String> scopes = jwt.getClaimAsStringList("scope");
 
+            Set<String> requiredScopes = new HashSet<>();
+            requiredScopes.addAll(securityProperties.getScopes().getRead());
+            requiredScopes.addAll(securityProperties.getScopes().getWrite());
+            requiredScopes.addAll(securityProperties.getScopes().getUpdate());
+            requiredScopes.addAll(securityProperties.getScopes().getDelete());
+
             boolean invalidClient = !securityProperties.getClients().getAllowed().contains(clientId);
-            boolean invalidScope = scopes == null || !new HashSet<>(scopes).containsAll(securityProperties.getScopes().getRequired());
+            boolean invalidScope = scopes == null || Collections.disjoint(scopes, requiredScopes);
 
             if (invalidClient || invalidScope) {
                 BaseResponse<Void> errorResponse = BaseResponse.error(

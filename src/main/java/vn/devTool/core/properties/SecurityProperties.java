@@ -32,6 +32,10 @@ public class SecurityProperties {
     @Setter
     public static class ScopeConfig {
         private List<String> required;
+        private List<String> read;
+        private List<String> write;
+        private List<String> update;
+        private List<String> delete;
     }
 
     @Getter

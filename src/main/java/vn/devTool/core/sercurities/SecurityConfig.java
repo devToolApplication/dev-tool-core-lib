@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,6 +44,22 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(props.getPublicRoutes().toArray(new String[0])).permitAll()
+            .requestMatchers(HttpMethod.GET, "/**")
+            .hasAnyAuthority(props.getScopes().getRead().stream()
+                .map(s -> "SCOPE_" + s).toArray(String[]::new))
+
+            .requestMatchers(HttpMethod.POST, "/**")
+            .hasAnyAuthority(props.getScopes().getWrite().stream()
+                .map(s -> "SCOPE_" + s).toArray(String[]::new))
+
+            .requestMatchers(HttpMethod.PUT, "/**")
+            .hasAnyAuthority(props.getScopes().getUpdate().stream()
+                .map(s -> "SCOPE_" + s).toArray(String[]::new))
+
+            .requestMatchers(HttpMethod.DELETE, "/**")
+            .hasAnyAuthority(props.getScopes().getDelete().stream()
+                .map(s -> "SCOPE_" + s).toArray(String[]::new))
+
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth2 -> oauth2
@@ -54,6 +71,7 @@ public class SecurityConfig {
 
     return http.build();
   }
+
 
   @Bean
   public JwtDecoder jwtDecoder() {

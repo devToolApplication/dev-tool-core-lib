@@ -23,9 +23,14 @@ spring:
       allowed:
         - "dev-tool-client"
     scopes:
-      required:
-        - "profile"
-        - "email"
+      read:
+        - "ai-generator-read"
+      write:
+        - "ai-generator-write"
+      delete:
+        - "ai-generator-delete"
+      update:
+        - "ai-generator-update"
   data:
     mongodb:
       uri:
