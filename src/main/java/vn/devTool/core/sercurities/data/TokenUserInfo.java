@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import vn.devTool.core.base.type.UserRole;
 
 @Data
 @NoArgsConstructor
@@ -14,5 +13,4 @@ public class TokenUserInfo {
   private String username;
   private String userId;
   private Long managerId;
-  private UserRole userRole;
 }

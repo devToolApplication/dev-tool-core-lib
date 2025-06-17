@@ -1,11 +1,14 @@
 package vn.devTool.core.utils;
 
+import feign.Response;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,5 +52,20 @@ public class MapperUtil {
             .collect(Collectors.toList());
 
         return new PageImpl<>(mappedList, sourcePage.getPageable(), sourcePage.getTotalElements());
+    }
+
+
+    /**
+     * Converts a Feign Response to target object using Jackson.
+     */
+    @SneakyThrows
+    public <T> T toResponseBody(Response response, Class<T> clazz) {
+        if (response.body() == null) {
+            return null;
+        }
+
+        try (InputStream inputStream = response.body().asInputStream()) {
+            return JsonUtils.fromInputStreamJson(inputStream, clazz);
+        }
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import vn.devTool.core.base.type.BusinessErrorCode;
 import vn.devTool.core.exceptions.BusinessException;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +56,18 @@ public class JsonUtils {
             return objectMapper.readValue(json, clazz);
         } catch (Exception e) {
             log.error("❌ Error converting JSON to object: {}", json, e);
+            return null;
+        }
+    }
+
+    /**
+     * 🔍 Convert JSON String → Object
+     */
+    public static <T> T fromInputStreamJson(InputStream inputStream, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(inputStream, clazz);
+        } catch (Exception e) {
+            log.error("❌ Error converting INPUT STREAM JSON to object: {}", inputStream, e);
             return null;
         }
     }

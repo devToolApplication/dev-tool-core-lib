@@ -21,27 +21,9 @@ public enum BusinessErrorCode {
     SERVICE_UNAVAILABLE("COMMON_503", "Service unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     JSON_PARSE_ERROR("COMMON_1000", "Json parse error", HttpStatus.SERVICE_UNAVAILABLE),
 
-    // Account error code
-    ACCOUNT_NOT_FOUND("ACCOUNT_01", "Account not found", HttpStatus.BAD_REQUEST),
-
-    // User error code
-    USER_NOT_FOUND("USER_01", "User not found", HttpStatus.BAD_REQUEST),
-    USER_EXISTS("USER_02", "User already exists", HttpStatus.BAD_REQUEST),
-
-    // Wallet error code
-    WALLET_NOT_ENOUGH_BALANCE("WALLET_01", "Wallet not enough balance", HttpStatus.BAD_REQUEST),
-
-    // Store error code
-    STORE_NOT_FOUND("STORE_01", "Store not found", HttpStatus.BAD_REQUEST),
-
-    // Store branch error code
-    STORE_BRANCH_NOT_FOUND("STORE_BRANCH_01", "Store branch not found", HttpStatus.BAD_REQUEST),
-
-    // Category error code
-    CATEGORY_NOT_FOUND("CATEGORY_01", "Category not found", HttpStatus.BAD_REQUEST),
-
-    // Product error code
-    PRODUCT_NOT_FOUND("PRODUCT_01", "Product not found", HttpStatus.BAD_REQUEST),
+    // Account service
+    ACCOUNT_NOT_FOUND("ACCOUNT_01", "Invalid username or password", HttpStatus.BAD_REQUEST),
+    KEYCLOAK_SERVER_ERROR("ACCOUNT_02", "Authentication error", HttpStatus.BAD_REQUEST),
 
     ;
 

@@ -21,16 +21,16 @@ spring:
       - "http://localhost:8085"
     clients:
       allowed:
-        - "dev-tool-client"
+        - "upload-service"
     scopes:
       read:
-        - "ai-generator-read"
+        -
       write:
-        - "ai-generator-write"
+        - "upload-write"
       delete:
-        - "ai-generator-delete"
+        -
       update:
-        - "ai-generator-update"
+        -
   data:
     mongodb:
       uri:
