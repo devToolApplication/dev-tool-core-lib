@@ -44,22 +44,6 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(props.getPublicRoutes().toArray(new String[0])).permitAll()
-            .requestMatchers(HttpMethod.GET, "/**")
-            .hasAnyAuthority(props.getScopes().getRead().stream()
-                .map(s -> "SCOPE_" + s).toArray(String[]::new))
-
-            .requestMatchers(HttpMethod.POST, "/**")
-            .hasAnyAuthority(props.getScopes().getWrite().stream()
-                .map(s -> "SCOPE_" + s).toArray(String[]::new))
-
-            .requestMatchers(HttpMethod.PUT, "/**")
-            .hasAnyAuthority(props.getScopes().getUpdate().stream()
-                .map(s -> "SCOPE_" + s).toArray(String[]::new))
-
-            .requestMatchers(HttpMethod.DELETE, "/**")
-            .hasAnyAuthority(props.getScopes().getDelete().stream()
-                .map(s -> "SCOPE_" + s).toArray(String[]::new))
-
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth2 -> oauth2

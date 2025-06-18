@@ -25,6 +25,9 @@ public enum BusinessErrorCode {
     ACCOUNT_NOT_FOUND("ACCOUNT_01", "Invalid username or password", HttpStatus.BAD_REQUEST),
     KEYCLOAK_SERVER_ERROR("ACCOUNT_02", "Authentication error", HttpStatus.BAD_REQUEST),
 
+    // ==== UPLOAD MCRS ERROR ====
+    UPLOAD_STORAGE_NOT_FOUND("UPLOAD_STORAGE_01", "Upload storage not found", HttpStatus.BAD_REQUEST),
+
     ;
 
     private final String code;

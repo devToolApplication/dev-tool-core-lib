@@ -1,11 +1,11 @@
 package vn.devTool.core.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,10 +17,7 @@ import vn.devTool.core.properties.SecurityProperties;
 import vn.devTool.core.utils.JsonUtils;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -36,32 +33,65 @@ public class JwtScopeValidationFilter extends OncePerRequestFilter {
 
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
+            MDC.put(RequestFilter.USER_ID, jwt.getClaim("preferred_username"));
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess == null || resourceAccess.isEmpty()) {
+                sendForbidden(response, "Forbidden: missing or empty resource_access");
+                return;
+            }
 
-            String clientId = jwt.getClaimAsString("client_id");
-            List<String> scopes = jwt.getClaimAsStringList("scope");
+            // Xác định các role cần thiết dựa theo HTTP method
+            Set<String> requiredRoles = switch (request.getMethod()) {
+                case "GET" -> new HashSet<>(securityProperties.getScopes().getRead());
+                case "POST" -> new HashSet<>(securityProperties.getScopes().getWrite());
+                case "PUT" -> new HashSet<>(securityProperties.getScopes().getUpdate());
+                case "DELETE" -> new HashSet<>(securityProperties.getScopes().getDelete());
+                default -> Collections.emptySet();
+            };
 
-            Set<String> requiredScopes = new HashSet<>();
-            requiredScopes.addAll(securityProperties.getScopes().getRead());
-            requiredScopes.addAll(securityProperties.getScopes().getWrite());
-            requiredScopes.addAll(securityProperties.getScopes().getUpdate());
-            requiredScopes.addAll(securityProperties.getScopes().getDelete());
+            // Nếu không yêu cầu role nào cho method này → cho phép luôn
+            if (requiredRoles.isEmpty() ||
+                (requiredRoles.size() == 1 && requiredRoles.contains(""))) {
+                // Không yêu cầu role => pass luôn
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-            boolean invalidClient = !securityProperties.getClients().getAllowed().contains(clientId);
-            boolean invalidScope = scopes == null || Collections.disjoint(scopes, requiredScopes);
+            // Duyệt các client roles
+            boolean hasValidRole = false;
 
-            if (invalidClient || invalidScope) {
-                BaseResponse<Void> errorResponse = BaseResponse.error(
-                    HttpServletResponse.SC_FORBIDDEN,
-                    "Forbidden: invalid client or scope"
-                );
+            for (Object clientObj : resourceAccess.values()) {
+                if (!(clientObj instanceof Map<?, ?> clientMap)) continue;
 
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.setContentType("application/json");
-                response.getWriter().write(JsonUtils.toExactJson(errorResponse));
+                Object rolesObj = clientMap.get("roles");
+                if (!(rolesObj instanceof List<?> roles)) continue;
+
+                for (Object role : roles) {
+                    if (role instanceof String roleStr && requiredRoles.contains(roleStr)) {
+                        hasValidRole = true;
+                        break;
+                    }
+                }
+
+                if (hasValidRole) break;
+            }
+
+            if (!hasValidRole) {
+                sendForbidden(response, "Forbidden: missing required role for this method");
                 return;
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void sendForbidden(HttpServletResponse response, String message) throws IOException {
+        BaseResponse<Void> errorResponse = BaseResponse.error(
+            HttpServletResponse.SC_FORBIDDEN,
+            message
+        );
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.getWriter().write(JsonUtils.toExactJson(errorResponse));
     }
 }

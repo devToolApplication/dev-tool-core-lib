@@ -29,6 +29,13 @@ public class MapperUtil {
     }
 
     /**
+     * Map từ source → destination (cập nhật object có sẵn)
+     */
+    public <S, D> void mapTo(S source, D destination) {
+        modelMapper.map(source, destination);
+    }
+
+    /**
      * Converts a List<T> to List<V>.
      */
     public <T, V> List<V> mapList(List<T> sourceList, Class<V> targetClass) {

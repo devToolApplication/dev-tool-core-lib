@@ -76,8 +76,12 @@ public class JsonUtils {
      * 📜 Convert JSON String → List<T>
      */
     public static <T> List<T> fromJsonToList(String json, Class<T> clazz) {
+        if (json == null || json.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
         try {
-            return objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            return objectMapper.readValue(json,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
         } catch (Exception e) {
             log.error("❌ Error converting JSON to List: {}", json, e);
             return Collections.emptyList();

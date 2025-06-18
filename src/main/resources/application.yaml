@@ -21,12 +21,12 @@ spring:
       - "http://localhost:8085"
     clients:
       allowed:
-        - "upload-service"
+        -
     scopes:
       read:
         -
       write:
-        - "upload-write"
+        -
       delete:
         -
       update:
