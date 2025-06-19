@@ -27,6 +27,8 @@ public enum BusinessErrorCode {
 
     // ==== UPLOAD MCRS ERROR ====
     UPLOAD_STORAGE_NOT_FOUND("UPLOAD_STORAGE_01", "Upload storage not found", HttpStatus.BAD_REQUEST),
+    REQUIRED_FIELD_NOT_NULL("UPLOAD_STORAGE_02", "Both storage type and storage id is null", HttpStatus.BAD_REQUEST),
+    UPLOAD_FAIL("UPLOAD_STORAGE_03", "Upload file to storage is error", HttpStatus.INTERNAL_SERVER_ERROR),
 
     ;
 

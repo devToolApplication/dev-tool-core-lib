@@ -99,10 +99,10 @@ public class RestTemplateUtil {
             HttpEntity<R> entity = new HttpEntity<>(body, httpHeaders);
             return restTemplate.exchange(url, method, entity, responseType);
         } catch (HttpStatusCodeException e) {
-            log.error("❌ API Error [{}]: {} - {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            log.error("API Error [{}]: {} - {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode()).build();
         } catch (Exception e) {
-            log.error("❌ Unexpected Error: {}", e.getMessage(), e);
+            log.error("Unexpected Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
