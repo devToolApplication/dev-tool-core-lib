@@ -30,6 +30,9 @@ public enum BusinessErrorCode {
     REQUIRED_FIELD_NOT_NULL("UPLOAD_STORAGE_02", "Both storage type and storage id is null", HttpStatus.BAD_REQUEST),
     UPLOAD_FAIL("UPLOAD_STORAGE_03", "Upload file to storage is error", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    UPLOAD_FILE_NOT_FOUND("UPLOAD_STORAGE_10", "Upload file not found", HttpStatus.BAD_REQUEST),
+    DOWNLOAD_FILE_ERROR("UPLOAD_STORAGE_11", "Download file error", HttpStatus.INTERNAL_SERVER_ERROR),
+
     ;
 
     private final String code;

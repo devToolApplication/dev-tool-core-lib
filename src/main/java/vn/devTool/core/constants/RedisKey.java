@@ -36,4 +36,18 @@ public class RedisKey {
     public String uploadFileFindAll() {
         return key("upload-file:all");
     }
+
+    // ==== AI MODEL ====
+    public String aiModelById(String id) {
+        return key("ai-model:id:%s", id);
+    }
+
+    public String aiModelFindAll() {
+        return key("ai-model:all");
+    }
+
+    public String aiModelByStorageTypeAndDefault(String modelType, boolean isDefault) {
+        return key("ai-model:model-type-default:%s:%s", isDefault, modelType);
+
+    }
 }
