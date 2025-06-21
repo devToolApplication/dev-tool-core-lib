@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.github.devToolApplication</groupId>
-    <artifactId>dev-tool-core-lib</artifactId>
+    <groupId>vn.dev-tool</groupId>
+    <artifactId>core-lib</artifactId>
     <version>0.0.1</version>
-    <name>dev-tool-core-lib</name>
+    <name>core-lib</name>
     <description>core-lib</description>
 
     <properties>
