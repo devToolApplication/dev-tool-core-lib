@@ -3,7 +3,7 @@ name: Deploy to Maven GitHub Packages
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
