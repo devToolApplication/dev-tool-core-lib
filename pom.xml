@@ -13,7 +13,7 @@
 
     <groupId>vn.dev-tool</groupId>
     <artifactId>core-lib</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.1</version>
     <name>core-lib</name>
     <description>core-lib</description>
 
@@ -171,7 +171,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/lamld01/auto-trade-core-lib</url>
+            <url>https://maven.pkg.github.com/devToolApplication/dev-tool-core-lib</url>
         </repository>
     </distributionManagement>
 </project>
