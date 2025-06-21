@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>vn.dev-tool</groupId>
-    <artifactId>core-lib</artifactId>
+    <groupId>com.github.devToolApplication</groupId>
+    <artifactId>dev-tool-core-lib</artifactId>
     <version>0.0.1</version>
-    <name>core-lib</name>
+    <name>dev-tool-core-lib</name>
     <description>core-lib</description>
 
     <properties>
@@ -95,8 +95,6 @@
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
-
-<!--        &lt;!&ndash; Spring Cloud OpenFeign &ndash;&gt;-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
