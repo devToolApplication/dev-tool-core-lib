@@ -43,10 +43,12 @@ public enum BusinessErrorCode {
     AI_MODEL_INVALID_URL("AI_MODEL_02", "Ai model not found url", HttpStatus.BAD_REQUEST),
     AI_MODEL_MISSING_API_KEY("AI_MODEL_03", "Ai model missing api key", HttpStatus.BAD_REQUEST),
 
-
     AI_MODEL_REQUEST_FAILED("AI_MODEL_100", "Ai model request fail", HttpStatus.BAD_REQUEST),
 
     PROMPT_SETTING_NOT_FOUND("PROMPT_SETTING_01", "Prompt setting not found", HttpStatus.BAD_REQUEST),
+
+    PROCESS_SETTING_NOT_FOUND("PROCESS_SETTING_01", "Process setting not found", HttpStatus.BAD_REQUEST),
+    PROCESS_SETTING_NOT_DONE("PROCESS_SETTING_50", "Process setting not done", HttpStatus.BAD_REQUEST),
 
     ;
 
