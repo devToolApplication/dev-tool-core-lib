@@ -11,21 +11,22 @@ metadata:
     jenkins: kaniko
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    command:
-    - /kaniko/executor
-    args:
-    - --help
-    volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:debug
+      command:
+        - /busybox/sh
+      args:
+        - -c
+        - "sleep 600"
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
   volumes:
-  - name: docker-config
-    projected:
-      sources:
-      - secret:
-          name: docker-config
+    - name: docker-config
+      projected:
+        sources:
+          - secret:
+              name: docker-config
 """
         }
     }
@@ -69,6 +70,12 @@ spec:
                     """
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Build finished.'
         }
     }
 }
