@@ -3,70 +3,71 @@ pipeline {
 
     environment {
         IMAGE_NAME = "lamld2510/core-lib"
-        KUBE_CONFIG_CONTENT = credentials('kubeconfig-jenkins') // Secret Text in Jenkins
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        DOCKER_REGISTRY = "docker.io"
+        CACHE_REPO = "lamld2510/core-lib-cache" // repo để lưu cache layer
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git credentialsId: 'github-jenkins', url: 'https://github.com/devToolApplication/dev-tool-core-lib.git'
             }
         }
 
-        stage('Prepare K8s Manifest') {
-            steps {
-                sh 'cp src/main/resources/k8s/deployment.yaml ./deployment.yaml'
-            }
-        }
-
-        stage('Prepare K8s Manifest') {
-            steps {
-                sh 'cp src/main/resources/k8s/deployment.yaml ./deployment.yaml'
-            }
-        }
-
-        stage('Build Maven') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t $IMAGE_NAME:${BUILD_NUMBER} ."
-            }
-        }
-
-        stage('Push Docker Image') {
+        stage('Build & Push with Kaniko (with cache)') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    // tạo file config.json dùng để login Docker registry
+                    writeFile file: 'kaniko-secret.json', text: """
+                    {
+                      "auths": {
+                        "https://index.docker.io/v1/": {
+                          "auth": "${DOCKER_USER}:${DOCKER_PASS}"
+                        }
+                      }
+                    }
+                    """
+
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $IMAGE_NAME:${BUILD_NUMBER}
+                    mkdir -p /kaniko/.docker
+                    cat kaniko-secret.json | base64 > /kaniko/.docker/config.json
+                    base64 -d /kaniko/.docker/config.json > /kaniko/.docker/config.json.decoded
+                    mv /kaniko/.docker/config.json.decoded /kaniko/.docker/config.json
                     '''
+
+                    container(name: 'kaniko', shell: '/busybox/sh') {
+                        sh '''#!/busybox/sh
+                        /kaniko/executor \
+                          --dockerfile=Dockerfile \
+                          --context=`pwd` \
+                          --destination=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
+                          --destination=$DOCKER_REGISTRY/$IMAGE_NAME:latest \
+                          --cache=true \
+                          --cache-repo=$DOCKER_REGISTRY/$CACHE_REPO \
+                          --insecure \
+                          --skip-tls-verify \
+                          --verbosity=info
+                        '''
+                    }
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                // Viết nội dung kubeconfig ra file
-                writeFile file: 'kubeconfig.yaml', text: "${KUBE_CONFIG_CONTENT}"
-
-                // Export biến KUBECONFIG và apply
-                sh '''
-                    export KUBECONFIG=$PWD/kubeconfig.yaml
-                    kubectl apply -f deployment.yaml
-                '''
+                withCredentials([file(credentialsId: 'kubeconfig-credential-id', variable: 'KUBECONFIG')]) {
+                    sh """
+                    kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG -n your-namespace
+                    """
+                }
             }
         }
     }
 
     post {
         always {
-            // Xóa kubeconfig file để tránh rò rỉ
-            sh 'rm -f kubeconfig.yaml'
+            sh 'rm -f kaniko-secret.json'
         }
     }
 }
