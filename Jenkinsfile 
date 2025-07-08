@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "lamld2510/core-lib"
+        KUBE_CONFIG_CONTENT = credentials('kubeconfig-jenkins') // Secret Text in Jenkins
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-jenkins', url: 'https://github.com/devToolApplication/dev-tool-core-lib.git'
+            }
+        }
+
+        stage('Prepare K8s Manifest') {
+            steps {
+                sh 'cp src/main/resources/k8s/deployment.yaml ./deployment.yaml'
+            }
+        }
+
+        stage('Prepare K8s Manifest') {
+            steps {
+                sh 'cp src/main/resources/k8s/deployment.yaml ./deployment.yaml'
+            }
+        }
+
+        stage('Build Maven') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t $IMAGE_NAME:${BUILD_NUMBER} ."
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $IMAGE_NAME:${BUILD_NUMBER}
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Viết nội dung kubeconfig ra file
+                writeFile file: 'kubeconfig.yaml', text: "${KUBE_CONFIG_CONTENT}"
+
+                // Export biến KUBECONFIG và apply
+                sh '''
+                    export KUBECONFIG=$PWD/kubeconfig.yaml
+                    kubectl apply -f deployment.yaml
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            // Xóa kubeconfig file để tránh rò rỉ
+            sh 'rm -f kubeconfig.yaml'
+        }
+    }
+}

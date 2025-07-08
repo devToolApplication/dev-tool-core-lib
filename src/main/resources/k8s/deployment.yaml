@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-lib
+  namespace: your-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-lib
+  template:
+    metadata:
+      labels:
+        app: core-lib
+    spec:
+      containers:
+        - name: core-lib
+          image: lamld2510/core-lib:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: devtool-secret
+            - secretRef:
+                name: db-secret
+            - secretRef:
+                name: oauth2-secret
