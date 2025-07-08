@@ -14,10 +14,9 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-    - sleep
+    - /kaniko/executor
     args:
-    - "3600"
-    tty: true
+    - --help
     volumeMounts:
     - name: docker-config
       mountPath: /kaniko/.docker
