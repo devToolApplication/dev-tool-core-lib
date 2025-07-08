@@ -1,11 +1,39 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'kaniko-agent'
+            defaultContainer 'kaniko'
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: kaniko
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker
+  volumes:
+  - name: docker-config
+    projected:
+      sources:
+      - secret:
+          name: docker-config
+"""
+        }
+    }
 
     environment {
         IMAGE_NAME = "lamld2510/core-lib"
         IMAGE_TAG = "${BUILD_NUMBER}"
         DOCKER_REGISTRY = "docker.io"
-        CACHE_REPO = "lamld2510/core-lib-cache" // repo để lưu cache layer
+        CACHE_REPO = "lamld2510/core-lib-cache"
     }
 
     stages {
@@ -15,41 +43,19 @@ pipeline {
             }
         }
 
-        stage('Build & Push with Kaniko (with cache)') {
+        stage('Build & Push with Kaniko + Cache') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    // tạo file config.json dùng để login Docker registry
-                    writeFile file: 'kaniko-secret.json', text: """
-                    {
-                      "auths": {
-                        "https://index.docker.io/v1/": {
-                          "auth": "${DOCKER_USER}:${DOCKER_PASS}"
-                        }
-                      }
-                    }
-                    """
-
+                container('kaniko') {
                     sh '''
-                    mkdir -p /kaniko/.docker
-                    cat kaniko-secret.json | base64 > /kaniko/.docker/config.json
-                    base64 -d /kaniko/.docker/config.json > /kaniko/.docker/config.json.decoded
-                    mv /kaniko/.docker/config.json.decoded /kaniko/.docker/config.json
+                    /kaniko/executor \
+                      --dockerfile=Dockerfile \
+                      --context=dir://$(pwd) \
+                      --destination=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                      --destination=${DOCKER_REGISTRY}/${IMAGE_NAME}:latest \
+                      --cache=true \
+                      --cache-repo=${DOCKER_REGISTRY}/${CACHE_REPO} \
+                      --verbosity=info
                     '''
-
-                    container(name: 'kaniko', shell: '/busybox/sh') {
-                        sh '''#!/busybox/sh
-                        /kaniko/executor \
-                          --dockerfile=Dockerfile \
-                          --context=`pwd` \
-                          --destination=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
-                          --destination=$DOCKER_REGISTRY/$IMAGE_NAME:latest \
-                          --cache=true \
-                          --cache-repo=$DOCKER_REGISTRY/$CACHE_REPO \
-                          --insecure \
-                          --skip-tls-verify \
-                          --verbosity=info
-                        '''
-                    }
                 }
             }
         }
@@ -58,16 +64,10 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-credential-id', variable: 'KUBECONFIG')]) {
                     sh """
-                    kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG -n your-namespace
+                    kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n dev
                     """
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            sh 'rm -f kaniko-secret.json'
         }
     }
 }
