@@ -13,14 +13,15 @@ spec:
   containers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
-      command:
-        - /busybox/sh
-      args:
-        - -c
-        - "sleep 600"
+      command: ["/busybox/sh"]
+      args: ["-c", "sleep 600"]
       volumeMounts:
         - name: docker-config
           mountPath: /kaniko/.docker
+    - name: kubectl
+      image: bitnami/kubectl:latest
+      command: ["/bin/sh"]
+      args: ["-c", "sleep 600"]
   volumes:
     - name: docker-config
       projected:
@@ -63,25 +64,32 @@ spec:
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig-jenkins', variable: 'KUBECONFIG')]) {
-                    sh script: '''
-                      echo "🚀 Tạo deployment.yaml thực tế từ template..."
-                      export IMAGE_TAG=$IMAGE_TAG
-                      export DOCKER_REGISTRY=$DOCKER_REGISTRY
-                      envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
+        steps {
+                script {
+                container('kubectl') {
+                        withCredentials([file(credentialsId: 'kubeconfig-jenkins', variable: 'KUBECONFIG')]) {
+                        sh '''
+                        echo "🚀 Tạo deployment.yaml thực tế từ template..."
+                        export IMAGE_TAG=${IMAGE_TAG}
+                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                        envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
 
-                      echo "🚀 Apply deployment lên Kubernetes..."
-                      kubectl --kubeconfig=$KUBECONFIG apply -f k8s-deploy-final.yaml
-                    ''', label: 'Deploy YAML to K8s'
+                        echo "🚀 Apply deployment lên Kubernetes..."
+                        kubectl --kubeconfig=$KUBECONFIG apply -f k8s-deploy-final.yaml
+                        '''
+                        }
                 }
-            }
+                }
         }
+        }
+
     }
 
     post {
         always {
-            echo 'Build finished.'
+            echo '✅ Build & Deploy finished.'
         }
     }
 }
+
+
