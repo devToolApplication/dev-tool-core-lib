@@ -64,10 +64,10 @@ spec:
 
         stage('Deploy to Kubernetes') {
             steps {
+                // ⚠️ Không dùng container('kaniko') ở đây
                 withCredentials([file(credentialsId: 'kubeconfig-jenkins', variable: 'KUBECONFIG')]) {
-                    sh """
-                    kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n dev
-                    """
+                    sh script: "kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n dev",
+                       label: 'Update Kubernetes Image'
                 }
             }
         }
