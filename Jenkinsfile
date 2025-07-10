@@ -64,10 +64,16 @@ spec:
 
         stage('Deploy to Kubernetes') {
             steps {
-                // ⚠️ Không dùng container('kaniko') ở đây
                 withCredentials([file(credentialsId: 'kubeconfig-jenkins', variable: 'KUBECONFIG')]) {
-                    sh script: "kubectl --kubeconfig=$KUBECONFIG set image deployment/core-lib core-lib=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n dev",
-                       label: 'Update Kubernetes Image'
+                    sh script: '''
+                      echo "🚀 Tạo deployment.yaml thực tế từ template..."
+                      export IMAGE_TAG=$IMAGE_TAG
+                      export DOCKER_REGISTRY=$DOCKER_REGISTRY
+                      envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
+
+                      echo "🚀 Apply deployment lên Kubernetes..."
+                      kubectl --kubeconfig=$KUBECONFIG apply -f k8s-deploy-final.yaml
+                    ''', label: 'Deploy YAML to K8s'
                 }
             }
         }

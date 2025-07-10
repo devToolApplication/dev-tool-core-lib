@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: core-lib
-  namespace: your-namespace
+  namespace: dev
 spec:
   replicas: 1
   selector:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: core-lib
-          image: lamld2510/core-lib:latest
+          image: ${DOCKER_REGISTRY}/lamld2510/core-lib:${IMAGE_TAG}
           ports:
             - containerPort: 8080
           envFrom:
