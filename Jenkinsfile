@@ -135,7 +135,6 @@ spec:
 
     post {
         always {
-            archiveArtifacts artifacts: 'k8s-deploy-final.yaml', allowEmptyArchive: true
             echo '✅ Pipeline completed.'
         }
         failure {
