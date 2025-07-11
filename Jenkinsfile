@@ -3,6 +3,8 @@ pipeline {
         kubernetes {
             label 'kaniko-agent'
             defaultContainer 'kaniko'
+            yamlMergeStrategy merge
+            reuseNode true
             yaml """
 apiVersion: v1
 kind: Pod
@@ -14,22 +16,24 @@ spec:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command: ["/busybox/sh"]
-      args: ["-c", "sleep 600"]
+      args: ["-c", "cat"]
+      tty: true
       volumeMounts:
         - name: docker-config
           mountPath: /kaniko/.docker
-        - mountPath: "/home/jenkins/agent"
-          name: "workspace-volume"
+        - name: workspace-volume
+          mountPath: "/home/jenkins/agent"
           readOnly: false
     - name: kubectl
       image: bitnami/kubectl:latest
       command: ["/bin/sh"]
-      args: ["-c", "apk add --no-cache gettext && sleep 600"]
+      args: ["-c", "apk add --no-cache gettext && cat"]
+      tty: true
       volumeMounts:
         - name: kubeconfig
           mountPath: /root/.kube
-        - mountPath: "/home/jenkins/agent"
-          name: "workspace-volume"
+        - name: workspace-volume
+          mountPath: "/home/jenkins/agent"
           readOnly: false
   volumes:
     - name: docker-config
@@ -51,6 +55,7 @@ spec:
         IMAGE_TAG = "${BUILD_NUMBER}"
         DOCKER_REGISTRY = "docker.io"
         CACHE_REPO = "lamld2510/core-lib-cache"
+        KUBECONFIG = "/root/.kube/config"
     }
 
     stages {
@@ -64,6 +69,7 @@ spec:
             steps {
                 container('kaniko') {
                     sh '''
+                    echo "🔨 Building and pushing Docker image with Kaniko..."
                     /kaniko/executor \
                       --dockerfile=Dockerfile \
                       --context=dir://$(pwd) \
@@ -84,28 +90,37 @@ spec:
             steps {
                 container('kubectl') {
                     sh '''
-                    echo "🚀 Checking if envsubst is available..."
-                    which envsubst || { echo "ERROR: envsubst not found"; exit 1; }
+                    echo "🔍 Checking if deployment.yaml exists..."
+                    if [ ! -f src/main/resources/k8s/deployment.yaml ]; then
+                      echo "❌ ERROR: deployment.yaml not found."
+                      exit 1
+                    fi
 
-                    echo "🚀 Checking if deployment.yaml exists..."
-                    ls -la src/main/resources/k8s/deployment.yaml || { echo "ERROR: deployment.yaml not found"; exit 1; }
-
-                    echo "🚀 Creating deployment.yaml from template..."
+                    echo "✅ Found deployment.yaml. Preparing deployment..."
                     export IMAGE_TAG=${IMAGE_TAG}
                     export DOCKER_REGISTRY=${DOCKER_REGISTRY}
                     envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
 
-                    echo "🚀 Verifying generated YAML..."
-                    cat k8s-deploy-final.yaml || { echo "ERROR: Failed to generate k8s-deploy-final.yaml"; exit 1; }
+                    echo "🔍 Verifying final YAML:"
+                    cat k8s-deploy-final.yaml
 
-                    echo "🚀 Validating YAML with dry-run..."
-                    kubectl apply -f k8s-deploy-final.yaml --dry-run=client || { echo "ERROR: Invalid YAML"; exit 1; }
+                    echo "🧪 Validating YAML with dry-run..."
+                    kubectl apply -f k8s-deploy-final.yaml --dry-run=client || {
+                      echo "❌ ERROR: Kubernetes manifest is invalid."
+                      exit 1
+                    }
 
-                    echo "🚀 Checking kubectl connectivity..."
-                    kubectl version --client --short || { echo "ERROR: kubectl version failed"; exit 1; }
+                    echo "🔗 Testing connection to Kubernetes cluster..."
+                    kubectl version --short || {
+                      echo "❌ ERROR: kubectl cannot connect to cluster."
+                      exit 1
+                    }
 
-                    echo "🚀 Applying deployment to Kubernetes..."
-                    kubectl apply -f k8s-deploy-final.yaml || { echo "ERROR: Failed to apply deployment"; exit 1; }
+                    echo "🚀 Deploying to Kubernetes..."
+                    kubectl apply -f k8s-deploy-final.yaml || {
+                      echo "❌ ERROR: kubectl apply failed."
+                      exit 1
+                    }
                     '''
                 }
             }
@@ -115,10 +130,10 @@ spec:
     post {
         always {
             archiveArtifacts artifacts: 'k8s-deploy-final.yaml', allowEmptyArchive: true
-            echo '✅ Build & Deploy finished.'
+            echo '✅ Pipeline completed.'
         }
         failure {
-            echo '❌ Build or Deploy failed. Check logs for details.'
+            echo '❌ Pipeline failed. Please check logs above.'
         }
     }
 }
