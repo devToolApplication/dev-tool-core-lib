@@ -6,23 +6,19 @@ pipeline {
             yaml """
 apiVersion: v1
 kind: Pod
-metadata:
-  labels:
-    jenkins: kubectl-test
 spec:
   containers:
-    - name: kubectl
-      image: bitnami/kubectl:latest
-      command: ["/bin/sh"]
-      args: ["-c", "cat"]  # giữ container sống để Jenkins chạy command
-      tty: true
-      volumeMounts:
-        - name: kubeconfig
-          mountPath: /root/.kube
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["/bin/sh"]
+    args: ["-c", "sleep 3600"]
+    volumeMounts:
+      - name: kubeconfig
+        mountPath: /root/.kube
   volumes:
-    - name: kubeconfig
-      secret:
-        secretName: kubeconfig-jenkins
+  - name: kubeconfig
+    secret:
+      secretName: kubeconfig-jenkins
 """
         }
     }
@@ -32,27 +28,17 @@ spec:
     }
 
     stages {
-        stage('Test kubectl access') {
+        stage('Test Kubectl') {
             steps {
                 container('kubectl') {
                     sh '''
-                    echo "🔍 Testing kubectl connection to the cluster..."
+                    echo "✅ Đang test kết nối tới Kubernetes..."
                     kubectl cluster-info
-
-                    echo "✅ Listing all namespaces:"
-                    kubectl get ns
+                    kubectl get nodes
+                    kubectl get pods -A
                     '''
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo '✅ kubectl test completed.'
-        }
-        failure {
-            echo '❌ kubectl test failed. Check KUBECONFIG or network.'
         }
     }
 }
