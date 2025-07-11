@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: core-lib
+  name: ${SERVICE_NAME}
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: core-lib
+      app: ${SERVICE_NAME}
   template:
     metadata:
       labels:
-        app: core-lib
+        app: ${SERVICE_NAME}
     spec:
       containers:
-        - name: core-lib
-          image: ${DOCKER_REGISTRY}/lamld2510/core-lib:${IMAGE_TAG}
+        - name: ${SERVICE_NAME}
+          image: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${SERVICE_NAME}:${IMAGE_TAG}
           ports:
             - containerPort: 8080
           envFrom:
