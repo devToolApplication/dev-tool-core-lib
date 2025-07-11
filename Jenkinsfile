@@ -3,7 +3,7 @@ pipeline {
         kubernetes {
             label 'kaniko-agent'
             defaultContainer 'kaniko'
-            yamlMergeStrategy merge
+            yamlMergeStrategy: merge
             yaml """
 apiVersion: v1
 kind: Pod
