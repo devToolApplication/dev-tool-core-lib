@@ -4,7 +4,6 @@ pipeline {
             label 'kaniko-agent'
             defaultContainer 'kaniko'
             yamlMergeStrategy merge
-            reuseNode true
             yaml """
 apiVersion: v1
 kind: Pod
@@ -22,8 +21,7 @@ spec:
         - name: docker-config
           mountPath: /kaniko/.docker
         - name: workspace-volume
-          mountPath: "/home/jenkins/agent"
-          readOnly: false
+          mountPath: /home/jenkins/agent
     - name: kubectl
       image: bitnami/kubectl:latest
       command: ["/bin/sh"]
@@ -33,8 +31,7 @@ spec:
         - name: kubeconfig
           mountPath: /root/.kube
         - name: workspace-volume
-          mountPath: "/home/jenkins/agent"
-          readOnly: false
+          mountPath: /home/jenkins/agent
   volumes:
     - name: docker-config
       projected:
