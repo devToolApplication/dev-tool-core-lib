@@ -3,6 +3,8 @@ pipeline {
         kubernetes {
             label 'kaniko-agent'
             defaultContainer 'kaniko'
+            yamlMergeStrategy merge
+            reuseNode true
             yaml """
 apiVersion: v1
 kind: Pod
@@ -13,15 +15,23 @@ spec:
   containers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
-      command: ["/busybox/sh"]
-      args: ["-c", "sleep 600"]
+      command:
+        - /busybox/sh
+      args:
+        - -c
+        - cat
+      tty: true
       volumeMounts:
         - name: docker-config
           mountPath: /kaniko/.docker
     - name: kubectl
       image: bitnami/kubectl:latest
-      command: ["/bin/sh"]
-      args: ["-c", "sleep 600"]
+      command:
+        - /bin/sh
+      args:
+        - -c
+        - cat
+      tty: true
       volumeMounts:
         - name: kubeconfig
           mountPath: /root/.kube
@@ -56,6 +66,7 @@ spec:
             steps {
                 container('kaniko') {
                     sh '''
+                    echo "🔨 Building and pushing image..."
                     /kaniko/executor \
                       --dockerfile=Dockerfile \
                       --context=dir://$(pwd) \
@@ -73,12 +84,10 @@ spec:
             steps {
                 container('kubectl') {
                     sh '''
-                    echo "🚀 Tạo deployment.yaml thực tế từ template..."
-                    export IMAGE_TAG=${IMAGE_TAG}
-                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                    echo "🚀 Generating Kubernetes deployment YAML..."
                     envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
 
-                    echo "🚀 Apply deployment lên Kubernetes..."
+                    echo "🚀 Applying deployment to Kubernetes cluster..."
                     kubectl apply -f k8s-deploy-final.yaml
                     '''
                 }
@@ -89,6 +98,9 @@ spec:
     post {
         always {
             echo '✅ Build & Deploy finished.'
+        }
+        failure {
+            echo '❌ Có lỗi xảy ra trong pipeline.'
         }
     }
 }
