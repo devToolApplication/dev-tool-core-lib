@@ -58,7 +58,14 @@ spec:
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'github-jenkins', url: 'https://github.com/devToolApplication/dev-tool-core-lib.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github-jenkins',
+                        url: 'https://github.com/devToolApplication/dev-tool-core-lib.git'
+                    ]]
+                ])
             }
         }
 
@@ -88,32 +95,34 @@ spec:
                 container('kubectl') {
                     sh '''
                     echo "🔍 Checking if deployment.yaml exists..."
-                    if [ ! -f src/main/resources/k8s/deployment.yaml ]; then
-                      echo "❌ ERROR: deployment.yaml not found."
+                    DEPLOY_FILE=src/main/resources/k8s/deployment.yaml
+
+                    if [ ! -f "$DEPLOY_FILE" ]; then
+                      echo "❌ ERROR: $DEPLOY_FILE not found."
                       exit 1
                     fi
 
                     echo "✅ Found deployment.yaml. Preparing deployment..."
                     export IMAGE_TAG=${IMAGE_TAG}
                     export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                    envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
+                    envsubst < "$DEPLOY_FILE" > k8s-deploy-final.yaml
 
-                    echo "🔍 Verifying final YAML:"
+                    echo "🔍 Verifying generated YAML:"
                     cat k8s-deploy-final.yaml
 
-                    echo "🧪 Validating YAML with dry-run..."
-                    kubectl apply -f k8s-deploy-final.yaml --dry-run=client || {
+                    echo "🧪 Validating manifest with dry-run..."
+                    kubectl apply --dry-run=client -f k8s-deploy-final.yaml || {
                       echo "❌ ERROR: Kubernetes manifest is invalid."
                       exit 1
                     }
 
-                    echo "🔗 Testing connection to Kubernetes cluster..."
-                    kubectl version --short || {
+                    echo "🔗 Verifying connection to Kubernetes cluster..."
+                    kubectl cluster-info || {
                       echo "❌ ERROR: kubectl cannot connect to cluster."
                       exit 1
                     }
 
-                    echo "🚀 Deploying to Kubernetes..."
+                    echo "🚀 Applying deployment..."
                     kubectl apply -f k8s-deploy-final.yaml || {
                       echo "❌ ERROR: kubectl apply failed."
                       exit 1
