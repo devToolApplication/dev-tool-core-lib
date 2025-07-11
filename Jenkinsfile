@@ -79,7 +79,7 @@ spec:
 
         stage('Deploy to Kubernetes') {
             options {
-                timeout(time: 10, unit: 'MINUTES')
+                timeout(time: 3, unit: 'MINUTES')
             }
             steps {
                 container('kubectl') {
