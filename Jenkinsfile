@@ -62,6 +62,7 @@ spec:
         DOCKER_REGISTRY = "docker.io"
         IMAGE_NAME = "${DOCKER_USERNAME}/${SERVICE_NAME}"
         CACHE_REPO = "${DOCKER_USERNAME}/${SERVICE_NAME}-cache"
+        NAMESPACE = "dev"
     }
 
     stages {
@@ -108,24 +109,19 @@ spec:
                     export DOCKER_REGISTRY=${DOCKER_REGISTRY}
                     export DOCKER_USERNAME=${DOCKER_USERNAME}
                     export SERVICE_NAME=${SERVICE_NAME}
+                    export NAMESPACE=${NAMESPACE}
                     envsubst < "$DEPLOY_FILE" > k8s-deploy-final.yaml
 
                     echo "📄 Generated YAML:"
                     cat k8s-deploy-final.yaml
 
-                    echo "📦 Checking namespace..."
-                    NAMESPACE=$(grep '^  namespace:' "$DEPLOY_FILE" | head -n1 | awk '{print $2}')
-                    if [ -n "$NAMESPACE" ]; then
-                        echo "📦 Checking if namespace '$NAMESPACE' exists..."
-                        kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 || {
-                            echo "🆕 Namespace '$NAMESPACE' not found. Creating..."
-                            kubectl create namespace "$NAMESPACE" || {
-                                echo "❌ ERROR: Failed to create namespace '$NAMESPACE'"; exit 1;
-                            }
+                    echo "📦 Checking if namespace '$NAMESPACE' exists..."
+                    kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 || {
+                        echo "🆕 Namespace '$NAMESPACE' not found. Creating..."
+                        kubectl create namespace "$NAMESPACE" || {
+                            echo "❌ ERROR: Failed to create namespace '$NAMESPACE'"; exit 1;
                         }
-                    else
-                        echo "⚠️ WARNING: Namespace not defined. Skipping creation."
-                    fi
+                    }
 
                     echo "🧪 Validating YAML with dry-run..."
                     kubectl apply -f k8s-deploy-final.yaml --dry-run=client || {
