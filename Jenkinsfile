@@ -3,8 +3,6 @@ pipeline {
         kubernetes {
             label 'kaniko-agent'
             defaultContainer 'kaniko'
-            yamlMergeStrategy merge
-            reuseNode true
             yaml """
 apiVersion: v1
 kind: Pod
@@ -15,23 +13,15 @@ spec:
   containers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
-      command:
-        - /busybox/sh
-      args:
-        - -c
-        - cat
-      tty: true
+      command: ["/busybox/sh"]
+      args: ["-c", "sleep 600"]
       volumeMounts:
         - name: docker-config
           mountPath: /kaniko/.docker
     - name: kubectl
       image: bitnami/kubectl:latest
-      command:
-        - /bin/sh
-      args:
-        - -c
-        - cat
-      tty: true
+      command: ["/bin/sh"]
+      args: ["-c", "sleep 600"]
       volumeMounts:
         - name: kubeconfig
           mountPath: /root/.kube
@@ -66,7 +56,6 @@ spec:
             steps {
                 container('kaniko') {
                     sh '''
-                    echo "🔨 Building and pushing image..."
                     /kaniko/executor \
                       --dockerfile=Dockerfile \
                       --context=dir://$(pwd) \
@@ -84,11 +73,22 @@ spec:
             steps {
                 container('kubectl') {
                     sh '''
-                    echo "🚀 Generating Kubernetes deployment YAML..."
+                    echo "🚀 Checking if deployment.yaml exists..."
+                    ls -la src/main/resources/k8s/deployment.yaml || { echo "ERROR: deployment.yaml not found"; exit 1; }
+
+                    echo "🚀 Creating deployment.yaml from template..."
+                    export IMAGE_TAG=${IMAGE_TAG}
+                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
                     envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
 
-                    echo "🚀 Applying deployment to Kubernetes cluster..."
-                    kubectl apply -f k8s-deploy-final.yaml
+                    echo "🚀 Verifying generated YAML..."
+                    cat k8s-deploy-final.yaml || { echo "ERROR: Failed to generate k8s-deploy-final.yaml"; exit 1; }
+
+                    echo "🚀 Checking kubectl connectivity..."
+                    kubectl version || { echo "ERROR: kubectl cannot connect to cluster"; exit 1; }
+
+                    echo "🚀 Applying deployment to Kubernetes..."
+                    kubectl apply -f k8s-deploy-final.yaml || { echo "ERROR: Failed to apply deployment"; exit 1; }
                     '''
                 }
             }
@@ -100,7 +100,7 @@ spec:
             echo '✅ Build & Deploy finished.'
         }
         failure {
-            echo '❌ Có lỗi xảy ra trong pipeline.'
+            echo '❌ Build or Deploy failed. Check logs for details.'
         }
     }
 }
