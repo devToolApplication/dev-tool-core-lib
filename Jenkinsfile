@@ -22,12 +22,18 @@ spec:
       image: bitnami/kubectl:latest
       command: ["/bin/sh"]
       args: ["-c", "sleep 600"]
+      volumeMounts:
+        - name: kubeconfig
+          mountPath: /root/.kube
   volumes:
     - name: docker-config
       projected:
         sources:
           - secret:
               name: docker-config
+    - name: kubeconfig
+      secret:
+        secretName: kubeconfig-jenkins
 """
         }
     }
@@ -64,25 +70,20 @@ spec:
         }
 
         stage('Deploy to Kubernetes') {
-        steps {
-                script {
+            steps {
                 container('kubectl') {
-                        withCredentials([file(credentialsId: 'kubeconfig-jenkins', variable: 'KUBECONFIG')]) {
-                        sh '''
-                        echo "🚀 Tạo deployment.yaml thực tế từ template..."
-                        export IMAGE_TAG=${IMAGE_TAG}
-                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                        envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
+                    sh '''
+                    echo "🚀 Tạo deployment.yaml thực tế từ template..."
+                    export IMAGE_TAG=${IMAGE_TAG}
+                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                    envsubst < src/main/resources/k8s/deployment.yaml > k8s-deploy-final.yaml
 
-                        echo "🚀 Apply deployment lên Kubernetes..."
-                        kubectl --kubeconfig=$KUBECONFIG apply -f k8s-deploy-final.yaml
-                        '''
-                        }
+                    echo "🚀 Apply deployment lên Kubernetes..."
+                    kubectl apply -f k8s-deploy-final.yaml
+                    '''
                 }
-                }
+            }
         }
-        }
-
     }
 
     post {
@@ -91,5 +92,3 @@ spec:
         }
     }
 }
-
-
