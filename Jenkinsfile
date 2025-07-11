@@ -18,13 +18,19 @@ spec:
       volumeMounts:
         - name: docker-config
           mountPath: /kaniko/.docker
+        - mountPath: "/home/jenkins/agent"
+          name: "workspace-volume"
+          readOnly: false
     - name: kubectl
       image: bitnami/kubectl:latest
       command: ["/bin/sh"]
-      args: ["-c", "sleep 600"]
+      args: ["-c", "apk add --no-cache gettext && sleep 600"]
       volumeMounts:
         - name: kubeconfig
           mountPath: /root/.kube
+        - mountPath: "/home/jenkins/agent"
+          name: "workspace-volume"
+          readOnly: false
   volumes:
     - name: docker-config
       projected:
@@ -34,6 +40,8 @@ spec:
     - name: kubeconfig
       secret:
         secretName: kubeconfig-jenkins
+    - name: workspace-volume
+      emptyDir: {}
 """
         }
     }
@@ -70,9 +78,15 @@ spec:
         }
 
         stage('Deploy to Kubernetes') {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
             steps {
                 container('kubectl') {
                     sh '''
+                    echo "🚀 Checking if envsubst is available..."
+                    which envsubst || { echo "ERROR: envsubst not found"; exit 1; }
+
                     echo "🚀 Checking if deployment.yaml exists..."
                     ls -la src/main/resources/k8s/deployment.yaml || { echo "ERROR: deployment.yaml not found"; exit 1; }
 
@@ -84,8 +98,11 @@ spec:
                     echo "🚀 Verifying generated YAML..."
                     cat k8s-deploy-final.yaml || { echo "ERROR: Failed to generate k8s-deploy-final.yaml"; exit 1; }
 
+                    echo "🚀 Validating YAML with dry-run..."
+                    kubectl apply -f k8s-deploy-final.yaml --dry-run=client || { echo "ERROR: Invalid YAML"; exit 1; }
+
                     echo "🚀 Checking kubectl connectivity..."
-                    kubectl version || { echo "ERROR: kubectl cannot connect to cluster"; exit 1; }
+                    kubectl version --client --short || { echo "ERROR: kubectl version failed"; exit 1; }
 
                     echo "🚀 Applying deployment to Kubernetes..."
                     kubectl apply -f k8s-deploy-final.yaml || { echo "ERROR: Failed to apply deployment"; exit 1; }
@@ -97,6 +114,7 @@ spec:
 
     post {
         always {
+            archiveArtifacts artifacts: 'k8s-deploy-final.yaml', allowEmptyArchive: true
             echo '✅ Build & Deploy finished.'
         }
         failure {
