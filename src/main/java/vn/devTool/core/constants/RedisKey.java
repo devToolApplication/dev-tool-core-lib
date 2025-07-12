@@ -48,6 +48,24 @@ public class RedisKey {
 
     public String aiModelByStorageTypeAndDefault(String modelType, boolean isDefault) {
         return key("ai-model:model-type-default:%s:%s", isDefault, modelType);
-
     }
+
+    // ==== CHART DATA ====
+
+    /**
+     * Key lưu dữ liệu 1 cây nến theo symbol và utcOpenTime
+     * Ví dụ: app:chart:BTCUSDT:2024-07-12T15:30:00
+     */
+    public String chartBySymbolAndUtcTime(String symbol, String utcOpenTime) {
+        return key("chart:%s:%s", symbol.toUpperCase(), utcOpenTime);
+    }
+
+    /**
+     * Key lưu vùng dữ liệu chart theo symbol và khoảng thời gian.
+     * Ví dụ: app:chart:BTCUSDT:range:2024-07-10T00:00:00_2024-07-12T00:00:00
+     */
+    public String chartBySymbolAndRange(String symbol, String startUtc, String endUtc) {
+        return key("chart:%s:range:%s_%s", symbol.toUpperCase(), startUtc, endUtc);
+    }
+
 }
