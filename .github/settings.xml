@@ -3,7 +3,7 @@
         <server>
             <id>github</id>
             <username>lamld01</username>
-            <password>${env.GITHUB_TOKEN}</password>
+            <password>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</password>
         </server>
     </servers>
 </settings>
