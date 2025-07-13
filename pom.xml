@@ -11,9 +11,9 @@
         <relativePath/>
     </parent>
 
-    <groupId>vn.dev-tool</groupId>
-    <artifactId>core-lib</artifactId>
-    <version>0.0.2</version>
+    <groupId>com.github.devToolApplication</groupId>
+    <artifactId>dev-tool-core-lib</artifactId>
+    <version>0.0.3</version>
     <name>core-lib</name>
     <description>core-lib</description>
 
