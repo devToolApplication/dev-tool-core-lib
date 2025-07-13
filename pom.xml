@@ -11,9 +11,9 @@
         <relativePath/>
     </parent>
 
-    <groupId>vn-devtool</groupId>
+    <groupId>vn.dev-tool</groupId>
     <artifactId>core-lib</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.1</version>
     <name>core-lib</name>
     <description>core-lib</description>
 
