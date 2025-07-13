@@ -169,7 +169,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/lamld01/dev-tool-core-lib</url>
+            <url>https://maven.pkg.github.com/devToolApplication/dev-tool-core-lib</url>
         </repository>
     </distributionManagement>
 </project>
