@@ -13,7 +13,7 @@
 
     <groupId>vn.dev-tool</groupId>
     <artifactId>core-lib</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
     <name>core-lib</name>
     <description>core-lib</description>
 

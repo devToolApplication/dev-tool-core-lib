@@ -91,4 +91,20 @@ public class RedisKey {
     public String lastSyncedAt(String configId, String intervalName) {
         return String.format("sync-config:lastSyncedAt:%s:%s", configId, intervalName);
     }
+
+    public String configFindAll() {
+        return this.key("config:all");
+    }
+
+    public String configPage(String params) {
+        return this.key("config:page:%s", params);
+    }
+
+    public String configById(String id) {
+        return this.key("config:id:%s", id);
+    }
+
+    public String configByKey(String key) {
+        return this.key("config:key:%s", key);
+    }
 }
