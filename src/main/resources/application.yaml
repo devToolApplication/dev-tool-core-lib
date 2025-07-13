@@ -52,7 +52,9 @@ spring:
       default-page-size: ${PAGE_SIZE_DEFAULT:10}
       max-page-size: ${PAGE_SIZE_MAX:100}
       one-indexed-parameters: ${PAGE_ONE_INDEXED:true}
-      sort-parameter: ${PAGE_SORT_PARAMETER:id,asc}
+      default:
+        sort: createdAt,DESC
+        size: 10
 
 feign:
   client:
