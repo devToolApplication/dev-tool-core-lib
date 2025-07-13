@@ -73,7 +73,7 @@ public class RedisKey {
      * Ví dụ: app:chart:BTCUSDT:1m:2024-07-12T15:30:00
      */
     public String chartBySymbolIntervalAndTime(String symbol, String interval, String utcOpenTime) {
-        return key("chart:%s:%s:%s", symbol.toUpperCase(), interval, utcOpenTime);
+        return key("chart:%s:%s:%s", symbol, interval, utcOpenTime);
     }
 
     public String syncConfigById(String id) {
@@ -86,5 +86,9 @@ public class RedisKey {
 
     public String syncConfigPage(String params) {
         return this.key("sync-config:page:%s", params);
+    }
+
+    public String lastSyncedAt(String configId, String intervalName) {
+        return String.format("sync-config:lastSyncedAt:%s:%s", configId, intervalName);
     }
 }
