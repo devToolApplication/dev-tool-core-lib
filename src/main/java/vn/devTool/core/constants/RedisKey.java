@@ -50,6 +50,14 @@ public class RedisKey {
         return key("ai-model:model-type-default:%s:%s", isDefault, modelType);
     }
 
+    public String promptSettingById(String id) {
+        return key("prompt-setting:by-id:%s", id);
+    }
+
+    public String promptSettingFindAll() {
+        return key("prompt-setting:find-all");
+    }
+
     // ==== CHART DATA ====
 
     /**
