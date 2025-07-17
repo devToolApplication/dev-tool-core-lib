@@ -2,7 +2,7 @@ spring:
   jackson:
     time-zone: ${TIME_ZONE:UTC}
   application:
-    name: ${APP_NAME:mos-core-lib}
+    name: ${APP_NAME:ai-agent-mcrs}
 
   security:
     oauth2:
