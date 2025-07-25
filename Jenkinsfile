@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            label 'kaniko-agent'
+            label 'develop-tool-consumer-build'
             defaultContainer 'kaniko'
             yaml """
 apiVersion: v1
@@ -56,7 +56,7 @@ spec:
     }
 
     environment {
-        SERVICE_NAME = "core-lib"
+        SERVICE_NAME = "develop-tool-consumer"
         DOCKER_USERNAME = "lamld2510"
         IMAGE_TAG = "${BUILD_NUMBER}"
         DOCKER_REGISTRY = "docker.io"
