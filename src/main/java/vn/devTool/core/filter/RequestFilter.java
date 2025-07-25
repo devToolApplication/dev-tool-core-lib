@@ -28,27 +28,29 @@ public class RequestFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-        // Lấy traceId từ header hoặc tạo mới nếu không có
         String traceId = httpRequest.getHeader(TRACE_ID);
         if (traceId == null || traceId.isBlank()) {
             traceId = UUID.randomUUID().toString();
         }
 
-        // Lấy path từ request
         String path = httpRequest.getRequestURI();
 
-        // Gán traceId và path vào MDC (ThreadLocal storage)
         MDC.put(TRACE_ID, traceId);
         MDC.put(PATH, path);
 
-        log.debug("🔗 Trace ID: {} | Path: {}", traceId, path);
+        long startTime = System.currentTimeMillis();
+
+        log.info("Incoming request | Trace ID: {} | Path: {}", traceId, path);
 
         try {
             chain.doFilter(request, response);
         } finally {
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Completed request | Trace ID: {} | Path: {} | Duration: {} ms", traceId, path, duration);
             MDC.clear();
         }
     }
+
 
     public static String getTraceId() {
         return MDC.get(TRACE_ID);

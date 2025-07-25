@@ -10,6 +10,7 @@ import vn.devTool.core.filter.RequestFilter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // Bỏ qua các trường null khi serialize JSON
+@ToString
 public class BaseResponse<T> {
     private String traceId;       // ID của request để debug/log
     private String path;          // API được gọi
