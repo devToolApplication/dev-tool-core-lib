@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Utility class for making HTTP requests using RestTemplate.
- * Provides common methods for GET, POST, PUT, and DELETE requests.
+ * Supports GET, POST, PUT, DELETE, and custom exchange with full control.
  */
 @Component
 @Log4j2
@@ -20,74 +20,26 @@ public class RestTemplateUtil {
 
     private final RestTemplate restTemplate;
 
-    /**
-     * Sends a GET request to the specified URL and returns the response.
-     *
-     * @param url          The target URL.
-     * @param responseType The expected response type.
-     * @param headers      Optional headers to include in the request.
-     * @param <T>          The type of the response body.
-     * @return ResponseEntity containing the response data.
-     */
+    // ========== BASIC METHODS WITH SIMPLE HEADERS ========== //
+
     public <T> ResponseEntity<T> get(String url, Class<T> responseType, Map<String, String> headers) {
         return exchange(url, HttpMethod.GET, null, responseType, headers);
     }
 
-    /**
-     * Sends a POST request to the specified URL with a request body.
-     *
-     * @param url          The target URL.
-     * @param body         The request body.
-     * @param responseType The expected response type.
-     * @param headers      Optional headers to include in the request.
-     * @param <T>          The type of the response body.
-     * @param <R>          The type of the request body.
-     * @return ResponseEntity containing the response data.
-     */
     public <T, R> ResponseEntity<T> post(String url, R body, Class<T> responseType, Map<String, String> headers) {
         return exchange(url, HttpMethod.POST, body, responseType, headers);
     }
 
-    /**
-     * Sends a PUT request to the specified URL with a request body.
-     *
-     * @param url          The target URL.
-     * @param body         The request body.
-     * @param responseType The expected response type.
-     * @param headers      Optional headers to include in the request.
-     * @param <T>          The type of the response body.
-     * @param <R>          The type of the request body.
-     * @return ResponseEntity containing the response data.
-     */
     public <T, R> ResponseEntity<T> put(String url, R body, Class<T> responseType, Map<String, String> headers) {
         return exchange(url, HttpMethod.PUT, body, responseType, headers);
     }
 
-    /**
-     * Sends a DELETE request to the specified URL.
-     *
-     * @param url          The target URL.
-     * @param responseType The expected response type.
-     * @param headers      Optional headers to include in the request.
-     * @param <T>          The type of the response body.
-     * @return ResponseEntity containing the response data.
-     */
     public <T> ResponseEntity<T> delete(String url, Class<T> responseType, Map<String, String> headers) {
         return exchange(url, HttpMethod.DELETE, null, responseType, headers);
     }
 
     /**
-     * Handles the HTTP request execution for all HTTP methods.
-     * Logs errors if the request fails.
-     *
-     * @param url          The target URL.
-     * @param method       The HTTP method to use (GET, POST, PUT, DELETE).
-     * @param body         The request body (if applicable).
-     * @param responseType The expected response type.
-     * @param headers      Headers to include in the request.
-     * @param <T>          The type of the response body.
-     * @param <R>          The type of the request body.
-     * @return ResponseEntity containing the response data.
+     * Basic exchange method for convenience (auto-create HttpEntity).
      */
     private <T, R> ResponseEntity<T> exchange(String url, HttpMethod method, R body, Class<T> responseType, Map<String, String> headers) {
         try {
@@ -105,5 +57,43 @@ public class RestTemplateUtil {
             log.error("Unexpected Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    // ========== ADVANCED METHOD: FULL CONTROL ========== //
+
+    /**
+     * Advanced exchange method with full control using prepared HttpEntity.
+     *
+     * @param url           Target URL
+     * @param method        HTTP Method (GET, POST, PUT, DELETE...)
+     * @param requestEntity Pre-constructed HttpEntity with headers and body
+     * @param responseType  Expected response class
+     * @param <T>           Type of response body
+     * @return ResponseEntity<T>
+     */
+    public <T> ResponseEntity<T> exchange(String url, HttpMethod method, HttpEntity<?> requestEntity, Class<T> responseType) {
+        try {
+            log.debug("Sending request to URL: {}", url);
+            log.debug("Method: {}", method);
+            log.debug("Headers: {}", requestEntity.getHeaders());
+            log.debug("Body: {}", requestEntity.getBody());
+
+            return restTemplate.exchange(url, method, requestEntity, responseType);
+        } catch (HttpStatusCodeException e) {
+            log.error("API Error [{}]: {} - {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).build();
+        } catch (Exception e) {
+            log.error("Unexpected Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ========== OPTIONAL: SHORTCUT FOR POST WITH FULL HttpEntity ========== //
+
+    /**
+     * Shortcut for POST method using full HttpEntity.
+     */
+    public <T> ResponseEntity<T> post(String url, HttpEntity<?> entity, Class<T> responseType) {
+        return exchange(url, HttpMethod.POST, entity, responseType);
     }
 }

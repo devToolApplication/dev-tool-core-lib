@@ -13,9 +13,10 @@
 
     <groupId>vn.dev-tool</groupId>
     <artifactId>core-lib</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.12</version>
     <name>core-lib</name>
     <description>core-lib</description>
+
 
     <properties>
         <java.version>21</java.version>
@@ -77,6 +78,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jetty</artifactId>
         </dependency>
+
+        <!-- Actuator (for health, metrics, etc.) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer Prometheus registry -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
 
         <!-- MongoDB -->
         <dependency>

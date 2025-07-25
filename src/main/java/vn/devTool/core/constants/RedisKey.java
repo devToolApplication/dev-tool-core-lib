@@ -50,6 +50,14 @@ public class RedisKey {
         return key("ai-model:model-type-default:%s:%s", isDefault, modelType);
     }
 
+    public String promptSettingById(String id) {
+        return key("prompt-setting:by-id:%s", id);
+    }
+
+    public String promptSettingFindAll() {
+        return key("prompt-setting:find-all");
+    }
+
     // ==== CHART DATA ====
 
     /**
@@ -68,4 +76,43 @@ public class RedisKey {
         return key("chart:%s:range:%s_%s", symbol.toUpperCase(), startUtc, endUtc);
     }
 
+    /**
+     * Key lưu 1 cây nến cụ thể theo symbol, interval, và thời gian mở nến.
+     * Ví dụ: app:chart:BTCUSDT:1m:2024-07-12T15:30:00
+     */
+    public String chartBySymbolIntervalAndTime(String symbol, String interval, String utcOpenTime) {
+        return key("chart:%s:%s:%s", symbol, interval, utcOpenTime);
+    }
+
+    public String syncConfigById(String id) {
+        return this.key("sync-config:id:%s", id);
+    }
+
+    public String syncConfigFindAll() {
+        return this.key("sync-config:all");
+    }
+
+    public String syncConfigPage(String params) {
+        return this.key("sync-config:page:%s", params);
+    }
+
+    public String lastSyncedAt(String configId, String intervalName) {
+        return String.format("sync-config:lastSyncedAt:%s:%s", configId, intervalName);
+    }
+
+    public String configFindAll() {
+        return this.key("config:all");
+    }
+
+    public String configPage(String params) {
+        return this.key("config:page:%s", params);
+    }
+
+    public String configById(String id) {
+        return this.key("config:id:%s", id);
+    }
+
+    public String configByKey(String key) {
+        return this.key("config:key:%s", key);
+    }
 }

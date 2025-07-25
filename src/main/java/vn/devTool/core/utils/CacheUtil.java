@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.function.Supplier;
+
 import org.springframework.data.domain.Page;
 
 @Component
@@ -83,6 +85,21 @@ public class CacheUtil {
         return JsonUtils.fromJson(json, clazz);
     }
 
+    public <T> T getJson(String key, Class<T> clazz, Supplier<T> fallback) {
+        String json = (String) this.redisTemplate.opsForValue().get(key);
+        if (json != null) {
+            return JsonUtils.fromJson(json, clazz);
+        }
+
+        // Nếu cache không có, gọi fallback, lưu vào Redis nếu kết quả khác null
+        T result = fallback.get();
+        if (result != null) {
+            this.setJson(key, result);
+        }
+        return result;
+    }
+
+
     // ========================== HỖ TRỢ LIST<T> ==========================
 
     /**
@@ -104,6 +121,23 @@ public class CacheUtil {
             redisTemplate.opsForValue().set(key, json);
         }
     }
+
+    /**
+     * 🔍 Lấy danh sách từ Redis dưới dạng JSON, fallback nếu không có
+     */
+    public <T> List<T> getList(String key, Class<T> clazz, Supplier<List<T>> fallback) {
+        String json = (String) redisTemplate.opsForValue().get(key);
+        if (json != null) {
+            return JsonUtils.fromJsonToList(json, clazz);
+        }
+
+        List<T> result = fallback.get();
+        if (result != null && !result.isEmpty()) {
+            this.setJson(key, result);
+        }
+        return result;
+    }
+
 
     /**
      * 🔍 Lấy danh sách từ Redis dưới dạng JSON

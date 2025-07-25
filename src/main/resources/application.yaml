@@ -12,7 +12,7 @@ spring:
       replicas: ${KAFKA_TOPIC_NOTIFICATION_REPLICAS:1}
 
     consumer:
-      group-id: ${KAFKA_CONSUMER_GROUP:dev-tool}
+      group-id: ${KAFKA_CONSUMER_GROUP:dev-tool-2}
       auto-offset-reset: earliest
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -22,6 +22,7 @@ spring:
       max-poll-records: ${KAFKA_MAX_POLL_RECORDS:100}               # Số lượng record tối đa mỗi lần poll
 
     listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:3}
       type: batch                        # Lắng nghe theo batch
       ack-mode: manual_immediate        # Thủ công, commit ngay lập tức
 
@@ -30,17 +31,24 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: ${KAFKA_PRODUCER_ACKS:all}
       retries: ${KAFKA_PRODUCER_RETRIES:3}
-      batch-size: ${KAFKA_PRODUCER_BATCH_SIZE:16384}             # 16KB
-      buffer-memory: ${KAFKA_PRODUCER_BUFFER_MEMORY:33554432}    # 32MB
-      linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}                   # chờ 5ms để gom batch
+#      batch-size: ${KAFKA_PRODUCER_BATCH_SIZE:16384}             # 16KB
+#      buffer-memory: ${KAFKA_PRODUCER_BUFFER_MEMORY:33554432}    # 32MB
+#      linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}                   # chờ 5ms để gom batch
 
     properties:
+      security.protocol: SASL_PLAINTEXT  # hoặc SASL_SSL nếu server dùng SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: >
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username="${KAFKA_USERNAME}"
+          password="${KAFKA_PASSWORD}";
+
       max.request.size: ${KAFKA_PRODUCER_MAX_REQUEST_SIZE:1048576} # 1MB
 
       # Cấu hình Kafka consumer native cho batch
-      fetch.min.bytes: ${KAFKA_FETCH_MIN_BYTES:1024}              # gom ít nhất 1KB mới gửi về
-      fetch.max.bytes: ${KAFKA_FETCH_MAX_BYTES:5242880}           # tối đa 5MB
-      fetch.max.wait.ms: ${KAFKA_FETCH_MAX_WAIT_MS:100}           # chờ tối đa 100ms để gom batch
+#      fetch.min.bytes: ${KAFKA_FETCH_MIN_BYTES:1024}              # gom ít nhất 1KB mới gửi về
+#      fetch.max.bytes: ${KAFKA_FETCH_MAX_BYTES:5242880}           # tối đa 5MB
+#      fetch.max.wait.ms: ${KAFKA_FETCH_MAX_WAIT_MS:100}           # chờ tối đa 100ms để gom batch
 
 
   security:
@@ -48,6 +56,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${OAUTH2_ISSUER_URI:https://keycloak.103.77.243.66.nip.io/realms/develop_tool_realm}
+          token-uri: ${OAUTH2_TOKEN_URI:https://keycloak.103.77.243.66.nip.io/realms/develop_tool_realm/protocol/openid-connect/token}
     public-routes:
       - "/v1/public/**"
       - "/swagger-ui/**"
@@ -91,7 +100,9 @@ spring:
       default-page-size: ${PAGE_SIZE_DEFAULT:10}
       max-page-size: ${PAGE_SIZE_MAX:100}
       one-indexed-parameters: ${PAGE_ONE_INDEXED:true}
-      sort-parameter: ${PAGE_SORT_PARAMETER:id,asc}
+      default:
+        sort: createdAt,DESC
+        size: 10
 
 feign:
   client:
@@ -121,6 +132,23 @@ springdoc:
 logging:
   level:
     vn.mos.core: ${LOG_LEVEL:INFO}
+    org.apache.kafka: ${LOG_LEVEL:INFO}
 
 server:
   port: ${SERVER_PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
