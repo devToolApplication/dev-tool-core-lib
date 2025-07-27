@@ -103,13 +103,14 @@ spring:
       default:
         sort: createdAt,DESC
         size: 10
-
-feign:
-  client:
-    config:
-      default:
-        connect-timeout: ${FEIGN_CONNECT_TIMEOUT:30000}
-        read-timeout: ${FEIGN_READ_TIMEOUT:30000}
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: ${FEIGN_CONNECT_TIMEOUT:120000}
+            readTimeout: ${FEIGN_READ_TIMEOUT:120000}
+            loggerLevel: basic
 
 rest-template:
   client:
